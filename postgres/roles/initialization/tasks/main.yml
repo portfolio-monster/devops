@@ -1,0 +1,86 @@
+####################################################################################################
+# 建立 Database 的部分
+####################################################################################################
+- name: Make sure pip3 is installed
+  apt:
+    name: 
+      - python3-pip
+    state: present
+
+- name: Make sure psycopg2 is installed
+  pip:
+    name: psycopg2
+    state: present
+
+- name: Create database
+  postgresql_db:
+    state: present
+    name: "{{ item }}"
+  loop: "{{ db_name }}"
+
+####################################################################################################
+# 建立 user 的部分
+####################################################################################################
+- name: Create super user
+  postgresql_user:
+    state: present
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    role_attr_flags: CREATEDB,SUPERUSER,CREATEROLE,LOGIN
+  loop: "{{ super_user }}"
+
+- name: Create db user
+  postgresql_user:
+    state: present
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+  loop: "{{ db_user }}"
+
+- name: Grant user access to specific db
+  postgresql_privs:
+    type: database
+    database: "{{ item.1 }}"
+    roles: "{{ item.0.username }}"
+    grant_option: no
+    privs: all
+  loop: "{{ db_user|subelements('access_db') }}"
+
+- name: Allow md5 connection for the db user
+  postgresql_pg_hba:
+    dest: "/etc/postgresql/14/main/pg_hba.conf"
+    contype: host
+    databases: all
+    method: md5
+    users: "{{ item.username }}"
+    create: true
+  loop: "{{ db_user }}"
+  notify: restart postgres    
+
+####################################################################################################
+# 設定 - 時區(亞洲/台北)
+####################################################################################################
+- name: Set timezone to Asia/Taipei
+  community.general.timezone:
+    name: Asia/Taipei
+
+####################################################################################################
+# sql 餵初始資量的部分
+####################################################################################################
+- name: Create a directory to store sql data
+  file:
+    path: "/srv/postgres"
+    state: directory
+
+- name: Copy setup sql file into virtual machine
+  copy:
+    src: "{{playbook_dir}}/config/{{item}}.sql"
+    dest: "/srv/postgres/{{item}}.sql"
+  loop: "{{db_name}}"
+
+- name: feed data into search table
+  community.postgresql.postgresql_script:
+    db: "{{item}}"
+    path: "/srv/postgres/{{item}}.sql"
+    positional_args:
+      - 1
+  loop: "{{db_name}}"

@@ -1,0 +1,25 @@
+---
+- name: run sql script
+  hosts: all 
+  become: true
+  become_user: root
+  vars:
+    script: script
+  tasks:
+
+    - name: Create a directory to store sql data
+      file:
+        path: "/srv/postgres"
+        state: directory
+
+    - name: Copy setup sql file into virtual machine
+      copy:
+        src: "{{playbook_dir}}/data/{{script}}.sql"
+        dest: "/srv/postgres/{{script}}.sql"
+
+    - name: feed data into search table
+      community.postgresql.postgresql_script:
+        db: "app"
+        path: "/srv/postgres/{{script}}.sql"
+        positional_args:
+          - 1

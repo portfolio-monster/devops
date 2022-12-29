@@ -1,0 +1,28 @@
+---
+- name: Feed all the data from database
+  hosts: all
+  become: true
+  become_user: root
+  vars_files:
+    - ./vars/database.yml
+  tasks:
+    
+    - name: copy csv file into remote machine 
+      copy: 
+        src: "{{playbook_dir}}/data/feed/{{item}}.csv"
+        dest: "tmp/{{item}}.csv"
+      loop: "{{table_name}}"
+
+    - name: fetch data into database
+      community.postgresql.postgresql_copy:
+        db: "{{db_name}}"
+        copy_from: "/tmp/{{item}}.csv"
+        dst: "{{table_name}}"
+        options:
+          format: csv
+          header: true
+     
+    - name: delete temporary csv file
+      ansible.builtin.file:
+        path: "/tmp/{{table_name}}.csv"
+        state: "absent"

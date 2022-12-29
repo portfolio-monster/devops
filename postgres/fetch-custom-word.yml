@@ -1,0 +1,9 @@
+---
+- name: get zhprs custom word
+  hosts: all
+  become: true
+  become_user: root 
+  vars_files:
+    - ./vars/zhparser.yml
+  roles: 
+    - fetch_data_from_table

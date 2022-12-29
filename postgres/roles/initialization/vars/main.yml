@@ -1,0 +1,12 @@
+db_name: 
+  - app
+
+super_user:
+  - username: superuser
+    password: 6705Brian
+
+db_user:
+  - username: supojen
+    password: 1Eh7x8qG*zEEj)n@6usD
+    access_db: 
+      - app

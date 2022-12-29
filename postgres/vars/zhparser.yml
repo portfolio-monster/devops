@@ -1,0 +1,4 @@
+---
+# This vars file is about setting up zhparser
+db_name: app
+table_name: zhparser.zhprs_custom_word

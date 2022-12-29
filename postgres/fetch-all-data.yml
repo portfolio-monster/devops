@@ -1,0 +1,30 @@
+---
+- name: Fecth all the data from database
+  hosts: all
+  become: true
+  become_user: root
+  vars_files:
+    - ./vars/database.yml
+  tasks:
+    - name: copy data from all tables into csv files
+      community.postgresql.postgresql_copy:
+        db: "{{db_name}}"
+        src: "{{item}}"
+        copy_to: "/tmp/{{item}}.csv"
+        options:
+          format: csv
+          header: true
+      loop: "{{table_name}}"
+
+    - name: fetch data from remote to local
+      fetch:
+        src: "/tmp/{{item}}.csv"
+        dest: "{{playbook_dir}}/data/backup/{{item}}.csv"
+        mode: 0774
+        flat: yes
+      loop: "{{table_name}}"
+
+    - name: delete temporary csv file
+      ansible.builtin.file:
+        path: "/tmp/{{table_name}}.csv"
+        state: "absent"

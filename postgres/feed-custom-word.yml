@@ -1,0 +1,10 @@
+---
+- name: get zhprs custom word
+  hosts: all
+  become: true
+  become_user: root 
+  vars:
+    db_name: mypin
+    table_name: zhparser.zhprs_custom_word
+  roles: 
+    - synchronize_simple_table

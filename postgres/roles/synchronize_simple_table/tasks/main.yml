@@ -1,0 +1,25 @@
+- name: copy csv file into remote machine
+  copy:
+    src: "{{playbook_dir}}/data/{{table_name}}.csv"
+    dest: "/tmp/{{table_name}}.csv"
+
+- name: delete data from table
+  postgresql_query:
+    db: "{{db_name}}"
+    query: "delete from {{table_name}}"
+
+
+- name: fetch data into table
+  community.postgresql.postgresql_copy:
+    db: "{{db_name}}"
+    copy_from: "/tmp/{{table_name}}.csv"
+    dst: "{{table_name}}"
+    options:
+      format: csv
+      header: true
+  notify: restart postgres
+
+- name: delete temporary csv file
+  ansible.builtin.file:
+    path: "/tmp/{{table_name}}.csv"
+    state: "absent"

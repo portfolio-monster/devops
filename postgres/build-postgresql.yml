@@ -1,0 +1,9 @@
+---
+- name: build an postgresql server
+  hosts: all
+  become: true
+  become_user: root 
+  roles: 
+    - installation
+    - zhparser
+    - initialization

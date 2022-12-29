@@ -1,0 +1,25 @@
+- name: debug variables
+  debug:
+    msg: "Database: {{db_name}}, Table: {{table_name}}"
+
+- name: copy date from table into csv file
+  community.postgresql.postgresql_copy:
+    db: "{{db_name}}"
+    src: "{{table_name}}"
+    copy_to: "/tmp/{{table_name}}.csv"
+    options:
+      format: csv
+      header: true
+
+- name: fetch data from remote to local
+  fetch:
+    src: "/tmp/{{table_name}}.csv"
+    dest: "{{playbook_dir}}/data/{{table_name}}.csv"
+    mode: 0774
+    flat: yes
+
+- name: delete temporary csv file
+  ansible.builtin.file:
+    path: "/tmp/{{table_name}}.csv"
+    state: "absent"
+

@@ -1,0 +1,46 @@
+- name: Get virtual machine information
+  command: uname -a
+  register: information
+
+- name: Print virtual machine information
+  debug: 
+    msg: "{{ information.stdout }}"
+
+- name: Update apt package manager reposiotries cache
+  apt:
+    update_cache: yes
+
+- name: Upgrade installed packages
+  apt:
+    upgrade: dist
+
+- name: Add the repository that provides PostgreSQL 14
+  shell: | 
+    sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+- name: Import GPG sigining key for the repository
+  apt_key:
+    url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+    state: present
+
+- name: Install postgresql 14
+  apt:
+    name: postgresql-14
+    state: present
+    update_cache: true
+
+- name: Allow remote connection to PostgreSQL database
+  copy:
+    src: "{{playbook_dir}}/config/pg_hba.conf"
+    dest: /etc/postgresql/14/main/
+
+- name: Allow PostgreSQL to listen on all interfaces
+  copy:
+    src: "{{playbook_dir}}/config/postgresql.conf"
+    dest: /etc/postgresql/14/main/ 
+  
+- name: Restart PostgreSQL
+  systemd:
+    name: postgresql
+    state: restarted
+    enabled: true

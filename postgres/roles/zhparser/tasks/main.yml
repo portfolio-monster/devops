@@ -1,0 +1,31 @@
+- name: install packages that will be used
+  apt:
+    name:
+      - gcc
+      - make
+      - wget
+      - git
+      - postgresql-server-dev-14
+      - bzip2
+    state: latest
+  
+- name: get scws
+  copy:
+    src: "{{playbook_dir}}/config/scws-1.2.3.tar.bz2"
+    dest: "~"
+
+- name: unzip scws
+  shell: |
+    tar xvjf scws-1.2.3.tar.bz2
+
+- name: install scws
+  shell: |
+    cd scws-1.2.3
+    ./configure
+    make install
+
+- name: install zhparser
+  shell: | 
+    git clone https://github.com/amutu/zhparser.git
+    cd zhparser
+    make && make install
